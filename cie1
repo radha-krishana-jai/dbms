@@ -1,0 +1,132 @@
+-- Create Employee table
+CREATE TABLE Employee (
+    Fname VARCHAR(20),
+    Minit CHAR(1),
+    Lname VARCHAR(20),
+    ssn INT PRIMARY KEY,
+    Bdate DATE,
+    Address VARCHAR(100),
+    Sex CHAR(1),
+    Salary DECIMAL(10,2),
+    Super_ssn INT,
+    DNO INT,
+    FOREIGN KEY (Super_ssn) REFERENCES Employee(ssn),
+    FOREIGN KEY (DNO) REFERENCES Department(Dnumber)
+);
+
+-- Create Department table
+CREATE TABLE Department (
+    Dname VARCHAR(30),
+    Dnumber INT PRIMARY KEY,
+    mgr_ssn INT,
+    mgr_start_date DATE,
+    FOREIGN KEY (mgr_ssn) REFERENCES Employee(ssn)
+);
+
+-- Create Dept_location table
+CREATE TABLE Dept_location (
+    Dnumber INT,
+    Dlocation VARCHAR(50),
+    FOREIGN KEY (Dnumber) REFERENCES Department(Dnumber)
+);
+
+-- Create Project table
+CREATE TABLE Project (
+    pname VARCHAR(50),
+    pnumber INT PRIMARY KEY,
+    plocation VARCHAR(50),
+    dnum INT,
+    FOREIGN KEY (dnum) REFERENCES Department(Dnumber)
+);
+
+-- Create Works_on table
+CREATE TABLE Works_on (
+    Essn INT,
+    pno INT,
+    hours DECIMAL(5,2),
+    FOREIGN KEY (Essn) REFERENCES Employee(ssn),
+    FOREIGN KEY (pno) REFERENCES Project(pnumber)
+);
+
+-- Create Dependent table
+CREATE TABLE Dependent (
+    Essn INT,
+    dependent_name VARCHAR(30),
+    sex CHAR(1),
+    Bdate DATE,
+    relationship VARCHAR(20),
+    FOREIGN KEY (Essn) REFERENCES Employee(ssn)
+);
+
+-- Insert into Department
+INSERT INTO Department VALUES 
+('Research', 1, NULL, '2020-01-01'),
+('Admin', 2, NULL, '2021-01-01'),
+('Development', 3, NULL, '2022-02-01'),
+('HR', 4, NULL, '2023-03-01'),
+('Finance', 5, NULL, '2022-06-01');
+
+-- Insert into Employee (including managers who will be assigned to departments)
+INSERT INTO Employee VALUES
+('John', 'A', 'Smith', 101, '1990-01-01', 'New York', 'M', 60000, NULL, 1),
+('Jane', 'B', 'Doe', 102, '1985-02-02', 'Chicago', 'F', 75000, 101, 2),
+('Alice', 'C', 'Brown', 103, '1992-03-03', 'Boston', 'F', 72000, 101, 3),
+('Bob', 'D', 'Johnson', 104, '1980-04-04', 'San Jose', 'M', 80000, 102, 4),
+('Tom', 'E', 'White', 105, '1988-05-05', 'Dallas', 'M', 67000, 104, 5);
+
+-- Update managers in department now that employees are inserted
+UPDATE Department SET mgr_ssn = 101 WHERE Dnumber = 1;
+UPDATE Department SET mgr_ssn = 102 WHERE Dnumber = 2;
+UPDATE Department SET mgr_ssn = 103 WHERE Dnumber = 3;
+UPDATE Department SET mgr_ssn = 104 WHERE Dnumber = 4;
+UPDATE Department SET mgr_ssn = 105 WHERE Dnumber = 5;
+
+-- Insert into Dept_location
+INSERT INTO Dept_location VALUES
+(1, 'New York'),
+(2, 'Chicago'),
+(3, 'Boston'),
+(4, 'San Jose'),
+(5, 'Dallas');
+
+-- Insert into Project
+INSERT INTO Project VALUES
+('AI Tool', 11, 'Stafford', 1),
+('Payroll', 12, 'New York', 2),
+('Website', 13, 'Boston', 3),
+('Training', 14, 'Dallas', 4),
+('Audit', 15, 'Stafford', 5);
+
+-- Insert into Works_on
+INSERT INTO Works_on VALUES
+(101, 11, 10),
+(102, 12, 8),
+(103, 13, 12),
+(104, 14, 9),
+(105, 15, 11);
+
+-- Insert into Dependent
+INSERT INTO Dependent VALUES
+(101, 'Sara', 'F', '2010-10-10', 'Daughter'),
+(102, 'Mike', 'M', '2012-12-12', 'Son'),
+(103, 'Lilly', 'F', '2015-05-05', 'Daughter'),
+(104, 'Ella', 'F', '2016-06-06', 'Wife'),
+(105, 'Chris', 'M', '2008-08-08', 'Son');
+
+-- QUERY 1: Name and address of all employees in 'Research' department
+SELECT E.Fname, E.Lname, E.Address
+FROM Employee E
+JOIN Department D ON E.DNO = D.Dnumber
+WHERE D.Dname = 'Research';
+
+-- QUERY 2: Projects in 'Stafford' with project number, dept no, manager details
+SELECT 
+    P.pnumber, 
+    D.Dnumber AS department_number, 
+    E.Lname AS manager_last_name, 
+    E.Address, 
+    E.Bdate
+FROM Project P
+JOIN Department D ON P.dnum = D.Dnumber
+JOIN Employee E ON D.mgr_ssn = E.ssn
+WHERE P.plocation = 'Stafford';
