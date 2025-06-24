@@ -1,4 +1,3 @@
--- Create Employee table
 CREATE TABLE Employee (
     Fname VARCHAR(20),
     Minit CHAR(1),
@@ -14,7 +13,8 @@ CREATE TABLE Employee (
     FOREIGN KEY (DNO) REFERENCES Department(Dnumber)
 );
 
--- Create Department table
+DESCRIBE Employee;
+
 CREATE TABLE Department (
     Dname VARCHAR(30),
     Dnumber INT PRIMARY KEY,
@@ -23,14 +23,16 @@ CREATE TABLE Department (
     FOREIGN KEY (mgr_ssn) REFERENCES Employee(ssn)
 );
 
--- Create Dept_location table
+DESCRIBE Department;
+
 CREATE TABLE Dept_location (
     Dnumber INT,
     Dlocation VARCHAR(50),
     FOREIGN KEY (Dnumber) REFERENCES Department(Dnumber)
 );
 
--- Create Project table
+DESCRIBE Dept_location;
+
 CREATE TABLE Project (
     pname VARCHAR(50),
     pnumber INT PRIMARY KEY,
@@ -39,7 +41,8 @@ CREATE TABLE Project (
     FOREIGN KEY (dnum) REFERENCES Department(Dnumber)
 );
 
--- Create Works_on table
+DESCRIBE Project;
+
 CREATE TABLE Works_on (
     Essn INT,
     pno INT,
@@ -48,7 +51,8 @@ CREATE TABLE Works_on (
     FOREIGN KEY (pno) REFERENCES Project(pnumber)
 );
 
--- Create Dependent table
+DESCRIBE Works_on;
+
 CREATE TABLE Dependent (
     Essn INT,
     dependent_name VARCHAR(30),
@@ -58,7 +62,8 @@ CREATE TABLE Dependent (
     FOREIGN KEY (Essn) REFERENCES Employee(ssn)
 );
 
--- Insert into Department
+DESCRIBE Dependent;
+
 INSERT INTO Department VALUES 
 ('Research', 1, NULL, '2020-01-01'),
 ('Admin', 2, NULL, '2021-01-01'),
@@ -66,7 +71,8 @@ INSERT INTO Department VALUES
 ('HR', 4, NULL, '2023-03-01'),
 ('Finance', 5, NULL, '2022-06-01');
 
--- Insert into Employee (including managers who will be assigned to departments)
+SELECT * FROM Department;
+
 INSERT INTO Employee VALUES
 ('John', 'A', 'Smith', 101, '1990-01-01', 'New York', 'M', 60000, NULL, 1),
 ('Jane', 'B', 'Doe', 102, '1985-02-02', 'Chicago', 'F', 75000, 101, 2),
@@ -74,14 +80,16 @@ INSERT INTO Employee VALUES
 ('Bob', 'D', 'Johnson', 104, '1980-04-04', 'San Jose', 'M', 80000, 102, 4),
 ('Tom', 'E', 'White', 105, '1988-05-05', 'Dallas', 'M', 67000, 104, 5);
 
--- Update managers in department now that employees are inserted
+SELECT * FROM Employee;
+
 UPDATE Department SET mgr_ssn = 101 WHERE Dnumber = 1;
 UPDATE Department SET mgr_ssn = 102 WHERE Dnumber = 2;
 UPDATE Department SET mgr_ssn = 103 WHERE Dnumber = 3;
 UPDATE Department SET mgr_ssn = 104 WHERE Dnumber = 4;
 UPDATE Department SET mgr_ssn = 105 WHERE Dnumber = 5;
 
--- Insert into Dept_location
+SELECT * FROM Department;
+
 INSERT INTO Dept_location VALUES
 (1, 'New York'),
 (2, 'Chicago'),
@@ -89,7 +97,8 @@ INSERT INTO Dept_location VALUES
 (4, 'San Jose'),
 (5, 'Dallas');
 
--- Insert into Project
+SELECT * FROM Dept_location;
+
 INSERT INTO Project VALUES
 ('AI Tool', 11, 'Stafford', 1),
 ('Payroll', 12, 'New York', 2),
@@ -97,7 +106,8 @@ INSERT INTO Project VALUES
 ('Training', 14, 'Dallas', 4),
 ('Audit', 15, 'Stafford', 5);
 
--- Insert into Works_on
+SELECT * FROM Project;
+
 INSERT INTO Works_on VALUES
 (101, 11, 10),
 (102, 12, 8),
@@ -105,7 +115,8 @@ INSERT INTO Works_on VALUES
 (104, 14, 9),
 (105, 15, 11);
 
--- Insert into Dependent
+SELECT * FROM Works_on;
+
 INSERT INTO Dependent VALUES
 (101, 'Sara', 'F', '2010-10-10', 'Daughter'),
 (102, 'Mike', 'M', '2012-12-12', 'Son'),
@@ -113,20 +124,50 @@ INSERT INTO Dependent VALUES
 (104, 'Ella', 'F', '2016-06-06', 'Wife'),
 (105, 'Chris', 'M', '2008-08-08', 'Son');
 
--- QUERY 1: Name and address of all employees in 'Research' department
-SELECT E.Fname, E.Lname, E.Address
-FROM Employee E
-JOIN Department D ON E.DNO = D.Dnumber
-WHERE D.Dname = 'Research';
+SELECT * FROM Dependent;
 
--- QUERY 2: Projects in 'Stafford' with project number, dept no, manager details
-SELECT 
-    P.pnumber, 
-    D.Dnumber AS department_number, 
-    E.Lname AS manager_last_name, 
-    E.Address, 
-    E.Bdate
-FROM Project P
-JOIN Department D ON P.dnum = D.Dnumber
-JOIN Employee E ON D.mgr_ssn = E.ssn
-WHERE P.plocation = 'Stafford';
+
+-- i. Retrieve the name and address of all employees who work for the ‘Research’ department
+
+SELECT e.Fname, e.Address
+FROM Employee e, Department d
+WHERE d.Dname = 'Research' AND d.Dnumber = e.DNO;
+
+-- ii. For every project located in ‘Stafford’, list the project number, the controlling department number,
+
+SELECT p.Pnumber, p.Dnum, e.Lname, e.Address, e.Bdate
+FROM Project p, Department d, Employee e
+WHERE p.Plocation = 'Stafford' AND p.Dnum = d.Dnumber AND d.mgr_ssn = e.ssn;
+
+-- iii. For each employee, retrieve the employee’s first and last name and the first and last name
+
+SELECT e.Fname, e.Lname, s.Fname AS Supervisor_Fname, s.Lname AS Supervisor_Lname
+FROM Employee e, Employee s
+WHERE e.Super_ssn = s.ssn;
+
+-- iv. Make a list of all project numbers for projects that involve an employee whose last name is ‘Smith’,
+
+(
+  SELECT DISTINCT p.Pnumber
+  FROM Project p, Department d, Employee e
+  WHERE p.Dnum = d.Dnumber AND d.mgr_ssn = e.ssn AND e.Lname = 'Smith'
+)
+UNION
+(
+  SELECT DISTINCT p.Pnumber
+  FROM Project p, Works_on w, Employee e
+  WHERE p.Pnumber = w.pno AND w.Essn = e.ssn AND e.Lname = 'Smith'
+);
+
+-- v. Retrieve all employees whose address is in Houston, Texas
+
+SELECT Fname, Minit, Lname
+FROM Employee
+WHERE Address = 'Houston,Texas';
+
+-- vi. Retrieve all employees in department 5 whose salary is between $30,000 and $40,000
+
+SELECT *
+FROM Employee
+WHERE DNO = 5 AND Salary BETWEEN 30000 AND 40000;
+
